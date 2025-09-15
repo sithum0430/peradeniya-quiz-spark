@@ -9,6 +9,7 @@ interface PlayerData {
   username: string;
   name: string;
   phone: string;
+  madeLeaderboard?: boolean;
 }
 
 const Index = () => {
@@ -21,8 +22,9 @@ const Index = () => {
     setAppState("quiz");
   };
 
-  const handleQuizComplete = (score: number) => {
+  const handleQuizComplete = (score: number, madeLeaderboard?: boolean) => {
     setFinalScore(score);
+    setPlayerData(prev => prev ? { ...prev, madeLeaderboard } : null);
     setAppState("results");
   };
 
@@ -48,7 +50,14 @@ const Index = () => {
   }
 
   if (appState === "results") {
-    return <Results score={finalScore} onPlayAgain={handlePlayAgain} />;
+    return (
+      <Results 
+        score={finalScore} 
+        onPlayAgain={handlePlayAgain}
+        madeLeaderboard={playerData?.madeLeaderboard}
+        playerData={playerData}
+      />
+    );
   }
 
   return null;

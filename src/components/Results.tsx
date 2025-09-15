@@ -15,9 +15,14 @@ interface LeaderboardEntry {
 interface ResultsProps {
   score: number;
   onPlayAgain: () => void;
+  madeLeaderboard?: boolean;
+  playerData?: {
+    username: string;
+    name: string;
+  };
 }
 
-export default function Results({ score, onPlayAgain }: ResultsProps) {
+export default function Results({ score, onPlayAgain, madeLeaderboard, playerData }: ResultsProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,25 +60,44 @@ export default function Results({ score, onPlayAgain }: ResultsProps) {
   };
 
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen p-4 bubble-effect">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <Card className="quiz-card text-center">
+        {/* Congratulations Message */}
+        {madeLeaderboard && (
+          <Card className="quiz-card text-center border-2 border-yellow-400/40 bg-gradient-to-r from-yellow-400/10 to-yellow-600/10 celebrate">
+            <CardContent className="p-6">
+              <div className="text-6xl mb-4">🎉</div>
+              <h2 className="text-2xl font-bold gradient-text mb-2">
+                Congratulations {playerData?.name}!
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                You made it to the Top 10 Leaderboard! 🏆
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Score Display */}
+        <Card className="quiz-card text-center float-animation">
           <CardHeader>
             <div className="flex justify-center items-center gap-6 mb-4">
               <img src={universityLogo} alt="University of Peradeniya" className="h-12 w-auto" />
               <img src={engexLogo} alt="EngEX Exhibition" className="h-12 w-auto" />
             </div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <CardTitle className="text-3xl font-bold gradient-text">
               Quiz Complete!
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-6xl font-bold text-primary mb-4">{score}</div>
-            <p className="text-xl text-muted-foreground mb-6">Final Score</p>
-            <Button onClick={onPlayAgain} className="quiz-gradient">
-              Play Again
-            </Button>
+            <div className="text-8xl font-bold score-pulse bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent mb-4">
+              {score}
+            </div>
+            <p className="text-2xl text-muted-foreground mb-8">Final Score</p>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={onPlayAgain} className="quiz-gradient text-white font-semibold px-8 py-3">
+                🚀 Try Again
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

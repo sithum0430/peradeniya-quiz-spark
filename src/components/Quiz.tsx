@@ -19,7 +19,7 @@ interface QuizProps {
   username: string;
   name: string;
   phone: string;
-  onQuizComplete: (score: number) => void;
+  onQuizComplete: (score: number, madeLeaderboard?: boolean) => void;
 }
 
 export default function Quiz({ username, name, phone, onQuizComplete }: QuizProps) {
@@ -226,12 +226,14 @@ export default function Quiz({ username, name, phone, onQuizComplete }: QuizProp
             }
           }
         }
+        
+        onQuizComplete(score, true); // Made leaderboard
+      } else {
+        onQuizComplete(score, false); // Didn't make leaderboard
       }
-
-      onQuizComplete(score);
     } catch (error) {
       console.error("Failed to end quiz:", error);
-      onQuizComplete(score);
+      onQuizComplete(score, false);
     }
   }, [sessionId, score, startTime, username, name, phone, onQuizComplete]);
 
@@ -249,11 +251,18 @@ export default function Quiz({ username, name, phone, onQuizComplete }: QuizProp
 
   if (timeLeft === 0 || currentQuestionIndex >= questions.length) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="quiz-card">
-          <CardContent className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Time's Up!</h2>
-            <p>Final Score: {score}</p>
+      <div className="min-h-screen flex items-center justify-center bubble-effect">
+        <Card className="quiz-card celebrate">
+          <CardContent className="p-12 text-center">
+            <div className="text-6xl mb-6">⏰</div>
+            <h2 className="text-4xl font-bold gradient-text mb-6">Time's Up!</h2>
+            <div className="text-6xl font-bold score-pulse bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4">
+              {score}
+            </div>
+            <p className="text-xl text-muted-foreground">Final Score</p>
+            <div className="mt-6 text-sm text-muted-foreground">
+              Calculating your position on the leaderboard...
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -264,19 +273,21 @@ export default function Quiz({ username, name, phone, onQuizComplete }: QuizProp
   const progress = (currentQuestionIndex / questions.length) * 100;
 
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen p-4 bubble-effect">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <Card className="quiz-card mb-6">
+        <Card className="quiz-card mb-6 float-animation">
           <CardContent className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <div className="text-lg font-semibold">Score: {score}</div>
-              <div className="text-lg font-semibold">
+              <div className="text-lg font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Score: {score}
+              </div>
+              <div className={`text-lg font-semibold ${timeLeft <= 30 ? 'text-red-500 animate-pulse' : 'text-foreground'}`}>
                 Time: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
               </div>
             </div>
-            <Progress value={progress} className="h-2" />
-            <p className="text-sm text-muted-foreground mt-2">
+            <Progress value={progress} className="h-3 mb-2" />
+            <p className="text-sm text-muted-foreground">
               Question {currentQuestionIndex + 1} of {questions.length}
             </p>
           </CardContent>
@@ -285,44 +296,52 @@ export default function Quiz({ username, name, phone, onQuizComplete }: QuizProp
         {/* Question */}
         <Card className="quiz-card">
           <CardHeader>
-            <CardTitle className="text-xl">{currentQuestion.question_text}</CardTitle>
+            <CardTitle className="text-2xl gradient-text leading-relaxed">
+              {currentQuestion.question_text}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <Button
               onClick={() => handleAnswer(1)}
               variant="outline"
-              className="w-full text-left justify-start h-auto p-4 text-wrap"
+              className="w-full text-left justify-start h-auto p-6 text-wrap glass border-0 hover:scale-105 transition-all duration-200 text-lg"
             >
-              A) {currentQuestion.option_1}
+              <span className="font-semibold text-primary mr-3">A)</span>
+              {currentQuestion.option_1}
             </Button>
             <Button
               onClick={() => handleAnswer(2)}
               variant="outline"
-              className="w-full text-left justify-start h-auto p-4 text-wrap"
+              className="w-full text-left justify-start h-auto p-6 text-wrap glass border-0 hover:scale-105 transition-all duration-200 text-lg"
             >
-              B) {currentQuestion.option_2}
+              <span className="font-semibold text-primary mr-3">B)</span>
+              {currentQuestion.option_2}
             </Button>
             <Button
               onClick={() => handleAnswer(3)}
               variant="outline"
-              className="w-full text-left justify-start h-auto p-4 text-wrap"
+              className="w-full text-left justify-start h-auto p-6 text-wrap glass border-0 hover:scale-105 transition-all duration-200 text-lg"
             >
-              C) {currentQuestion.option_3}
+              <span className="font-semibold text-primary mr-3">C)</span>
+              {currentQuestion.option_3}
             </Button>
             <Button
               onClick={() => handleAnswer(4)}
               variant="outline"
-              className="w-full text-left justify-start h-auto p-4 text-wrap"
+              className="w-full text-left justify-start h-auto p-6 text-wrap glass border-0 hover:scale-105 transition-all duration-200 text-lg"
             >
-              D) {currentQuestion.option_4}
+              <span className="font-semibold text-primary mr-3">D)</span>
+              {currentQuestion.option_4}
             </Button>
-            <Button
-              onClick={handlePass}
-              variant="secondary"
-              className="w-full mt-4"
-            >
-              Pass Question
-            </Button>
+            <div className="pt-4 border-t border-border/20">
+              <Button
+                onClick={handlePass}
+                variant="secondary"
+                className="w-full glass border-0 hover:bg-muted/80 text-lg py-3"
+              >
+                ⏭️ Pass Question
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

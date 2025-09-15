@@ -32,18 +32,31 @@ All colors MUST be HSL.
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    /* Quiz App Custom Colors */
+/* Quiz App Custom Colors - University & EngEX Branding */
     --quiz-primary: 263 70% 50%;
     --quiz-secondary: 142 76% 36%;
     --quiz-accent: 43 96% 56%;
+    --quiz-gold: 43 96% 56%;
     --quiz-surface: 0 0% 100%;
     --quiz-surface-dark: 220 25% 95%;
     
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(263 70% 50%), hsl(220 70% 60%));
-    --gradient-secondary: linear-gradient(135deg, hsl(142 76% 36%), hsl(120 60% 50%));
-    --gradient-background: linear-gradient(135deg, hsl(220 25% 97%), hsl(230 20% 95%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 25% 98%));
+    /* Glassmorphism Colors */
+    --glass-bg: hsla(0, 0%, 100%, 0.25);
+    --glass-border: hsla(0, 0%, 100%, 0.18);
+    --glass-shadow: hsla(0, 0%, 0%, 0.1);
+    
+    /* Enhanced Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(263 70% 50%) 0%, hsl(220 70% 60%) 50%, hsl(142 76% 36%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(120 60% 50%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(43 96% 56%) 0%, hsl(38 92% 50%) 100%);
+    --gradient-background: radial-gradient(circle at 20% 50%, hsl(263 70% 95%) 0%, transparent 50%), 
+                          radial-gradient(circle at 80% 20%, hsl(142 76% 95%) 0%, transparent 50%), 
+                          radial-gradient(circle at 40% 80%, hsl(43 96% 95%) 0%, transparent 50%),
+                          linear-gradient(135deg, hsl(220 25% 97%) 0%, hsl(230 20% 95%) 100%);
+    --gradient-card: linear-gradient(145deg, 
+                     hsla(0, 0%, 100%, 0.8) 0%, 
+                     hsla(220, 25%, 98%, 0.6) 50%, 
+                     hsla(0, 0%, 100%, 0.4) 100%);
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
@@ -97,14 +110,27 @@ All colors MUST be HSL.
     --quiz-primary: 263 70% 60%;
     --quiz-secondary: 142 76% 46%;
     --quiz-accent: 43 96% 66%;
+    --quiz-gold: 43 96% 66%;
     --quiz-surface: 220 15% 8%;
     --quiz-surface-dark: 220 15% 6%;
     
-    /* Dark Mode Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(263 70% 40%), hsl(220 70% 30%));
-    --gradient-secondary: linear-gradient(135deg, hsl(142 76% 26%), hsl(120 60% 30%));
-    --gradient-background: linear-gradient(135deg, hsl(222.2 84% 4.9%), hsl(230 20% 8%));
-    --gradient-card: linear-gradient(145deg, hsl(220 15% 8%), hsl(220 15% 12%));
+    /* Dark Mode Glassmorphism */
+    --glass-bg: hsla(220, 15%, 8%, 0.25);
+    --glass-border: hsla(0, 0%, 100%, 0.08);
+    --glass-shadow: hsla(0, 0%, 0%, 0.3);
+    
+    /* Dark Mode Enhanced Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(263 70% 40%) 0%, hsl(220 70% 30%) 50%, hsl(142 76% 26%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(142 76% 26%) 0%, hsl(120 60% 30%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(43 96% 46%) 0%, hsl(38 92% 40%) 100%);
+    --gradient-background: radial-gradient(circle at 20% 50%, hsl(263 70% 15%) 0%, transparent 50%), 
+                          radial-gradient(circle at 80% 20%, hsl(142 76% 15%) 0%, transparent 50%), 
+                          radial-gradient(circle at 40% 80%, hsl(43 96% 15%) 0%, transparent 50%),
+                          linear-gradient(135deg, hsl(222.2 84% 4.9%) 0%, hsl(230 20% 8%) 100%);
+    --gradient-card: linear-gradient(145deg, 
+                     hsla(220, 15%, 8%, 0.8) 0%, 
+                     hsla(220, 15%, 12%, 0.6) 50%, 
+                     hsla(220, 15%, 6%, 0.4) 100%);
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
@@ -132,24 +158,124 @@ All colors MUST be HSL.
   }
 }
 
-/* Glassmorphism utilities */
+/* Enhanced Glassmorphism & Animation System */
 .glass {
-  backdrop-filter: blur(16px);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.glass-dark {
-  backdrop-filter: blur(16px);
-  background: rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px) saturate(180%);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px var(--glass-shadow);
 }
 
 .quiz-gradient {
   background: var(--gradient-primary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.quiz-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px var(--glass-shadow);
 }
 
 .quiz-card {
   background: var(--gradient-card);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px var(--glass-shadow), 
+              0 0 0 1px hsla(0, 0%, 100%, 0.05) inset;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.quiz-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px var(--glass-shadow), 
+              0 0 0 1px hsla(0, 0%, 100%, 0.1) inset;
+}
+
+/* Floating Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Score Pulse Animation */
+@keyframes scorePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.score-pulse {
+  animation: scorePulse 2s ease-in-out infinite;
+}
+
+/* Leaderboard Entry Animation */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.leaderboard-entry {
+  animation: slideInUp 0.6s ease-out forwards;
+}
+
+/* Success Celebration */
+@keyframes celebrate {
+  0% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(-5deg); }
+  50% { transform: scale(1.2) rotate(5deg); }
+  75% { transform: scale(1.1) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.celebrate {
+  animation: celebrate 0.8s ease-in-out;
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Bubble Effect */
+.bubble-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.bubble-effect::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, hsla(263, 70%, 50%, 0.1) 0%, transparent 50%);
+  animation: bubble 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes bubble {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
