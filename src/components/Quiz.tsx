@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { GameService } from "@/lib/gameService";
 
 interface Question {
   id: number;
@@ -29,7 +30,7 @@ export default function Quiz({ username, name, phone, onQuizComplete, onReturnTo
   const [score, setScore] = useState(0);
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(90);
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(Date.now());
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const { toast } = useToast();
 
@@ -55,19 +56,10 @@ export default function Quiz({ username, name, phone, onQuizComplete, onReturnTo
         const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
         setQuestions(shuffled);
 
-        // Create quiz session
-        const { data: session, error } = await supabase
-          .from("quiz_sessions")
-          .insert({
-            username,
-            total_score: 0,
-            duration_seconds: 0,
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-        setSessionId(session.id);
+        // Create quiz session using GameService
+        const gameSession = await GameService.startSession(username);
+        setSessionId(gameSession.sessionId);
+        setStartTime(gameSession.startTime);
         setQuestionStartTime(Date.now());
       } catch (error) {
         console.error("Failed to initialize quiz:", error);
@@ -175,73 +167,23 @@ export default function Quiz({ username, name, phone, onQuizComplete, onReturnTo
   const endQuiz = useCallback(async () => {
     if (!sessionId) {
       console.log("No session ID - cannot update quiz session");
+      onQuizComplete(score, false);
       return;
     }
 
-    const totalDuration = Math.floor((Date.now() - startTime) / 1000);
-    console.log("Ending quiz - Score:", score, "Duration:", totalDuration, "Session ID:", sessionId);
-
     try {
-      // Update session with final score
-      const { error: sessionError } = await supabase
-        .from("quiz_sessions")
-        .update({
-          total_score: score,
-          duration_seconds: totalDuration,
-        })
-        .eq("id", sessionId);
+      // Use GameService to handle all end-of-quiz operations
+      const result = await GameService.endSession(
+        sessionId,
+        score,
+        startTime,
+        username,
+        name,
+        phone
+      );
 
-      if (sessionError) {
-        console.error("Failed to update quiz session:", sessionError);
-        toast({
-          title: "Warning",
-          description: "Failed to save session data",
-          variant: "destructive",
-        });
-      } else {
-        console.log("Quiz session updated successfully");
-      }
-
-      // Use the secure RPC function to handle leaderboard upsert
-      console.log("Calling upsert_leaderboard with:", { username, name, phone, score });
-      const { error: leaderboardError } = await supabase.rpc("upsert_leaderboard", {
-        p_username: username,
-        p_name: name,
-        p_phone: phone,
-        p_score: score,
-      });
-
-      if (leaderboardError) {
-        console.error("Failed to update leaderboard:", leaderboardError);
-        toast({
-          title: "Error",
-          description: "Failed to update leaderboard",
-          variant: "destructive",
-        });
-        onQuizComplete(score, false);
-        return;
-      } else {
-        console.log("Leaderboard updated successfully");
-      }
-
-      // Check if player made it to top 10 (after the upsert)
-      const { data: leaderboard, error: checkError } = await supabase
-        .from("leaderboard")
-        .select("username")
-        .order("score", { ascending: false })
-        .order("achieved_at", { ascending: true })
-        .limit(10);
-
-      if (checkError) {
-        console.error("Failed to check leaderboard:", checkError);
-        onQuizComplete(score, false);
-        return;
-      }
-
-      console.log("Current leaderboard top 10:", leaderboard);
-      const madeLeaderboard = leaderboard?.some(entry => entry.username === username) || false;
-      console.log("Player made leaderboard:", madeLeaderboard);
-      onQuizComplete(score, madeLeaderboard);
+      console.log("Quiz ended successfully:", result);
+      onQuizComplete(score, result.inTop10);
 
     } catch (error) {
       console.error("Failed to end quiz:", error);
