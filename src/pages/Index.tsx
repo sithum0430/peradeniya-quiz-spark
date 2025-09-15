@@ -1,14 +1,57 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import Registration from "@/components/Registration";
+import Quiz from "@/components/Quiz";
+import Results from "@/components/Results";
+
+type AppState = "registration" | "quiz" | "results";
+
+interface PlayerData {
+  username: string;
+  name: string;
+  phone: string;
+}
 
 const Index = () => {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  const [appState, setAppState] = useState<AppState>("registration");
+  const [playerData, setPlayerData] = useState<PlayerData | null>(null);
+  const [finalScore, setFinalScore] = useState(0);
+
+  const handleRegistrationSuccess = (username: string, name: string, phone: string) => {
+    setPlayerData({ username, name, phone });
+    setAppState("quiz");
+  };
+
+  const handleQuizComplete = (score: number) => {
+    setFinalScore(score);
+    setAppState("results");
+  };
+
+  const handlePlayAgain = () => {
+    setAppState("registration");
+    setPlayerData(null);
+    setFinalScore(0);
+  };
+
+  if (appState === "registration") {
+    return <Registration onRegistrationSuccess={handleRegistrationSuccess} />;
+  }
+
+  if (appState === "quiz" && playerData) {
+    return (
+      <Quiz
+        username={playerData.username}
+        name={playerData.name}
+        phone={playerData.phone}
+        onQuizComplete={handleQuizComplete}
+      />
+    );
+  }
+
+  if (appState === "results") {
+    return <Results score={finalScore} onPlayAgain={handlePlayAgain} />;
+  }
+
+  return null;
 };
 
 export default Index;
