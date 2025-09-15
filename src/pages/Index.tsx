@@ -34,6 +34,12 @@ const Index = () => {
     setFinalScore(0);
   };
 
+  const handleReturnToRegistration = () => {
+    setAppState("registration");
+    setPlayerData(null);
+    setFinalScore(0);
+  };
+
   if (appState === "registration") {
     return <Registration onRegistrationSuccess={handleRegistrationSuccess} />;
   }
@@ -45,6 +51,7 @@ const Index = () => {
         name={playerData.name}
         phone={playerData.phone}
         onQuizComplete={handleQuizComplete}
+        onReturnToRegistration={handleReturnToRegistration}
       />
     );
   }

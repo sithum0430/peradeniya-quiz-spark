@@ -20,9 +20,10 @@ interface QuizProps {
   name: string;
   phone: string;
   onQuizComplete: (score: number, madeLeaderboard?: boolean) => void;
+  onReturnToRegistration?: () => void;
 }
 
-export default function Quiz({ username, name, phone, onQuizComplete }: QuizProps) {
+export default function Quiz({ username, name, phone, onQuizComplete, onReturnToRegistration }: QuizProps) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -172,9 +173,13 @@ export default function Quiz({ username, name, phone, onQuizComplete }: QuizProp
   };
 
   const endQuiz = useCallback(async () => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      console.log("No session ID - cannot update quiz session");
+      return;
+    }
 
     const totalDuration = Math.floor((Date.now() - startTime) / 1000);
+    console.log("Ending quiz - Score:", score, "Duration:", totalDuration, "Session ID:", sessionId);
 
     try {
       // Update session with final score
@@ -193,9 +198,12 @@ export default function Quiz({ username, name, phone, onQuizComplete }: QuizProp
           description: "Failed to save session data",
           variant: "destructive",
         });
+      } else {
+        console.log("Quiz session updated successfully");
       }
 
       // Use the secure RPC function to handle leaderboard upsert
+      console.log("Calling upsert_leaderboard with:", { username, name, phone, score });
       const { error: leaderboardError } = await supabase.rpc("upsert_leaderboard", {
         p_username: username,
         p_name: name,
@@ -212,6 +220,8 @@ export default function Quiz({ username, name, phone, onQuizComplete }: QuizProp
         });
         onQuizComplete(score, false);
         return;
+      } else {
+        console.log("Leaderboard updated successfully");
       }
 
       // Check if player made it to top 10 (after the upsert)
@@ -228,7 +238,9 @@ export default function Quiz({ username, name, phone, onQuizComplete }: QuizProp
         return;
       }
 
+      console.log("Current leaderboard top 10:", leaderboard);
       const madeLeaderboard = leaderboard?.some(entry => entry.username === username) || false;
+      console.log("Player made leaderboard:", madeLeaderboard);
       onQuizComplete(score, madeLeaderboard);
 
     } catch (error) {
@@ -268,6 +280,15 @@ export default function Quiz({ username, name, phone, onQuizComplete }: QuizProp
             <div className="mt-6 text-sm text-muted-foreground">
               Calculating your position on the leaderboard...
             </div>
+            {onReturnToRegistration && (
+              <Button
+                onClick={onReturnToRegistration}
+                variant="outline"
+                className="mt-6"
+              >
+                Return to Registration
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
