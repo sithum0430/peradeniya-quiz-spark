@@ -178,7 +178,7 @@ export default function Quiz({ username, name, phone, onQuizComplete }: QuizProp
 
     try {
       // Update session with final score
-      await supabase
+      const { error: sessionError } = await supabase
         .from("quiz_sessions")
         .update({
           total_score: score,
@@ -186,56 +186,61 @@ export default function Quiz({ username, name, phone, onQuizComplete }: QuizProp
         })
         .eq("id", sessionId);
 
-      // Check if score makes it to leaderboard (top 10)
-      const { data: leaderboard } = await supabase
-        .from("leaderboard")
-        .select("score")
-        .order("score", { ascending: false });
-
-      const shouldAddToLeaderboard = 
-        !leaderboard || 
-        leaderboard.length < 10 || 
-        score > leaderboard[leaderboard.length - 1]?.score;
-
-      if (shouldAddToLeaderboard) {
-        // Add to leaderboard
-        await supabase.from("leaderboard").insert({
-          username,
-          name,
-          phone,
-          score,
-          achieved_at: new Date().toISOString(),
+      if (sessionError) {
+        console.error("Failed to update quiz session:", sessionError);
+        toast({
+          title: "Warning",
+          description: "Failed to save session data",
+          variant: "destructive",
         });
-
-        // Keep only top 10
-        if (leaderboard && leaderboard.length >= 10) {
-          const { data: fullLeaderboard } = await supabase
-            .from("leaderboard")
-            .select("*")
-            .order("score", { ascending: false })
-            .order("achieved_at", { ascending: true });
-
-          if (fullLeaderboard && fullLeaderboard.length > 10) {
-            const toDelete = fullLeaderboard.slice(10);
-            for (const record of toDelete) {
-              await supabase
-                .from("leaderboard")
-                .delete()
-                .eq("username", record.username)
-                .eq("achieved_at", record.achieved_at);
-            }
-          }
-        }
-        
-        onQuizComplete(score, true); // Made leaderboard
-      } else {
-        onQuizComplete(score, false); // Didn't make leaderboard
       }
+
+      // Use the secure RPC function to handle leaderboard upsert
+      const { error: leaderboardError } = await supabase.rpc("upsert_leaderboard", {
+        p_username: username,
+        p_name: name,
+        p_phone: phone,
+        p_score: score,
+      });
+
+      if (leaderboardError) {
+        console.error("Failed to update leaderboard:", leaderboardError);
+        toast({
+          title: "Error",
+          description: "Failed to update leaderboard",
+          variant: "destructive",
+        });
+        onQuizComplete(score, false);
+        return;
+      }
+
+      // Check if player made it to top 10 (after the upsert)
+      const { data: leaderboard, error: checkError } = await supabase
+        .from("leaderboard")
+        .select("username")
+        .order("score", { ascending: false })
+        .order("achieved_at", { ascending: true })
+        .limit(10);
+
+      if (checkError) {
+        console.error("Failed to check leaderboard:", checkError);
+        onQuizComplete(score, false);
+        return;
+      }
+
+      const madeLeaderboard = leaderboard?.some(entry => entry.username === username) || false;
+      onQuizComplete(score, madeLeaderboard);
+
     } catch (error) {
       console.error("Failed to end quiz:", error);
+      toast({
+        title: "Error",
+        description: "Quiz completion failed",
+        variant: "destructive",
+      });
       onQuizComplete(score, false);
     }
-  }, [sessionId, score, startTime, username, name, phone, onQuizComplete]);
+  }, [sessionId, score, startTime, username, name, phone, onQuizComplete, toast]);
 
   if (questions.length === 0) {
     return (
