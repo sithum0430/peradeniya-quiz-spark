@@ -176,7 +176,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      upsert_leaderboard: {
+        Args: {
+          p_name: string
+          p_phone: string
+          p_score: number
+          p_username: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
