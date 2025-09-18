@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { GameService } from "@/lib/gameService";
 
+
+
 interface Question {
   id: number;
   question_text: string;
@@ -74,22 +76,53 @@ export default function Quiz({ username, name, phone, onQuizComplete, onReturnTo
     initializeQuiz();
   }, [username, toast]);
 
+
+  const [ended, setEnded] = useState(false);
+  const endQuiz = useCallback(async () => {
+  if (ended) return;
+  setEnded(true);
+
+  if (!sessionId) {
+    console.log("No session ID - cannot update quiz session");
+    onQuizComplete(score, false);
+    return;
+  }
+
+  try {
+    const result = await GameService.endSession(
+      sessionId,
+      score,
+      startTime,
+      username,
+      name,
+      phone
+    );
+    console.log("endSession result", result);
+    onQuizComplete(score, result.inTop10);
+  } catch (error) {
+    console.error("Failed to end quiz:", error);
+    toast({ title: "Error", description: "Quiz completion failed", variant: "destructive" });
+    onQuizComplete(score, false);
+  }
+}, [ended, sessionId, score, startTime, username, name, phone, onQuizComplete, toast]);
+
+
+
   // Timer countdown
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          endQuiz();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+  const timer = setInterval(() => {
+    setTimeLeft((prev) => {
+      if (prev <= 1) {
+        endQuiz();
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+  return () => clearInterval(timer);
+}, [endQuiz]);
 
-    return () => clearInterval(timer);
-  }, []);
-
-  const calculateScore = (answerTimeMs: number) => {
+const calculateScore = (answerTimeMs: number) => {
     const answerTimeSeconds = answerTimeMs / 1000;
     if (answerTimeSeconds <= 10) {
       // Full bonus for answers within 10 seconds (linear scale)
@@ -163,38 +196,9 @@ export default function Quiz({ username, name, phone, onQuizComplete, onReturnTo
       endQuiz();
     }
   };
+  
 
-  const endQuiz = useCallback(async () => {
-    if (!sessionId) {
-      console.log("No session ID - cannot update quiz session");
-      onQuizComplete(score, false);
-      return;
-    }
-
-    try {
-      // Use GameService to handle all end-of-quiz operations
-      const result = await GameService.endSession(
-        sessionId,
-        score,
-        startTime,
-        username,
-        name,
-        phone
-      );
-
-      console.log("Quiz ended successfully:", result);
-      onQuizComplete(score, result.inTop10);
-
-    } catch (error) {
-      console.error("Failed to end quiz:", error);
-      toast({
-        title: "Error",
-        description: "Quiz completion failed",
-        variant: "destructive",
-      });
-      onQuizComplete(score, false);
-    }
-  }, [sessionId, score, startTime, username, name, phone, onQuizComplete, toast]);
+  
 
   if (questions.length === 0) {
     return (
